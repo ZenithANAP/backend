@@ -58,19 +58,29 @@ app.use("/register", (req, res) => {
   }
 });
 
-app.use("/getType", (req, res) => {
+app.use("/getType", async (req, res) => {
   const user = req.currentUser;
   if (user) {
     console.log(user.email);
-    User.find({ email: user.email }).then((u) => {
-      let type = u.map((doc) => doc.type);
-      console.log(type[0]);
-      let hasData = false;
-      if (u.username) {
-        hasData = true;
-      }
-      res.json({ type: type[0], hasData: hasData });
-    });
+    try {
+      let doc = await User.findOne({ email: user.email });
+      res.status(200).json({
+        type: doc.type,
+        hasData: doc.username ? true : false,
+      });
+    } catch (e) {
+      res.status(404).send("User not found");
+    }
+    // User.findOne({ email: user.email }).then((u) => {
+    //   let type = u.map((doc) => doc.type);
+    //   console.log(type[0]);
+    //   let hasData = false;
+    //   if (u.username) {
+    //     console.log(u.username);
+    //     hasData = true;
+    //   }
+    //   res.json({ type: type[0], hasData: hasData });
+    // });
     // res.send("User created");
   } else {
     res.send("Not logged in");
