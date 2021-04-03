@@ -3,6 +3,8 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 require("dotenv").config();
 const donorsRouter = require("./src/routes/donors");
+const receiversRouter = require("./src/routes/receivers");
+
 const decodeIDToken = require("./authenticateToken");
 let Donor = require("./src/models/donor");
 let User = require("./src/models/user");
@@ -31,11 +33,6 @@ connection.once("open", () => {
   console.log("MongoDB database connection established successfully");
 });
 
-app.use("/greet", (req, res) => {
-  res.json({
-    greet: "Heyyy",
-  });
-});
 app.use("/register", (req, res) => {
   const user = req.currentUser;
   if (user) {
@@ -79,7 +76,9 @@ app.use("/getType", (req, res) => {
     res.send("Not logged in");
   }
 });
+
 app.use("/donors", donorsRouter);
+app.use("/receivers", receiversRouter);
 
 app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);
