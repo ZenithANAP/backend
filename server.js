@@ -46,10 +46,13 @@ app.use("/register", (req, res) => {
       email: email,
       type: type,
     });
-
+    console.log(firebase_id);
     newUser
       .save()
-      .then(() => res.json("User added!"))
+      .then(() => {
+        res.json("User added!");
+        console.log("User added");
+      })
       .catch((err) => res.status(400).json("Error: " + err));
   }
 });
