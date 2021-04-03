@@ -5,6 +5,7 @@ admin.initializeApp({
   //   databaseURL: 'https://phone-book-fe436.firebaseio.com',
 });
 async function decodeIDToken(req, res, next) {
+  // console.log(req.headers);
   const header = req.headers.authorization;
   if (
     header !== "Bearer null" &&
