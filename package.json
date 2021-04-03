@@ -11,10 +11,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "busboy": "^0.3.1",
+    "connect-busboy": "0.0.2",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "firebase-admin": "^9.6.0",
+    "fs-extra": "^9.1.0",
     "mongoose": "^5.12.3",
     "mongoose-extend-schema": "^1.0.0"
   },

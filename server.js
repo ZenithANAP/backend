@@ -6,7 +6,9 @@ const donorsRouter = require("./src/routes/donors");
 const decodeIDToken = require("./authenticateToken");
 let Donor = require("./src/models/donor");
 let User = require("./src/models/user");
+let path = require("path");
 // let User = mongoose.model("user");
+let busboy = require("connect-busboy");
 let Receiver = require("./src/models/receiver");
 
 const app = express();
@@ -15,6 +17,8 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use(decodeIDToken);
+app.use(busboy());
+// app.use(express.static(path.join(__dirname, "public")));
 
 const uri = process.env.ATLAS_URI;
 mongoose.connect(uri, {
@@ -75,7 +79,7 @@ app.use("/getType", (req, res) => {
     res.send("Not logged in");
   }
 });
-// app.use("/donors", donorsRouter);
+app.use("/donors", donorsRouter);
 
 app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);
