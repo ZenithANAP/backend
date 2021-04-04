@@ -1,24 +1,23 @@
 let path = require("path");
 let fs = require("fs-extra");
 const User = require("../models/user");
-
 const router = require("express").Router();
 let Donor = require("../models/donor");
+let Bank = require("../models/bank");
+let Donation = require("../models/donation");
+let mongoose = require("mongoose");
 
 router.route("/").get((req, res) => {
   Donor.find()
     .then((donors) => res.json(donors))
     .catch((err) => res.status(400).json("Error: " + err));
 });
-
 /*  
 https://stackoverflow.com/questions/23691194/node-express-file-upload
 */
-
 router.route("/add1").post((req, res) => {
   // const username = req.body.username;
   let user = req.currentUser;
-
   console.log(req.body);
   if (user) {
     let username = req.body.username;
@@ -31,7 +30,6 @@ router.route("/add1").post((req, res) => {
     let weight = req.body.weight;
     let medical_conditions = req.body.medical_conditions;
     let recovery_date = req.body.recovery_date;
-
     let toUpdate = {
       username: username,
       phone: phone,
@@ -43,9 +41,7 @@ router.route("/add1").post((req, res) => {
       weight: weight,
       medical_conditions: medical_conditions,
     };
-
     console.log(toUpdate);
-
     User.findOneAndUpdate(
       { email: user.email },
       toUpdate,
@@ -74,13 +70,11 @@ router.route("/add1").post((req, res) => {
 });
 router.route("/add2").post((req, res) => {
   let user = req.currentUser;
-
-  console.log(req.body);
+  // console.log(req.body);
   if (user) {
     let fstream;
     let covid_report = null;
     let medical_report = null;
-
     req.pipe(req.busboy);
     req.busboy.on("file", function (fieldname, file, filename) {
       if (fieldname === "covid_report") {
@@ -112,19 +106,86 @@ router.route("/add2").post((req, res) => {
       });
     });
   } else {
-    res.send("User doesnt exist");
+    res.status(404).send("User doesnt exist");
   }
 });
 
-router.route("/:email").get((req, res) => {
-  const auth = req.currentUser;
-  if (auth) {
-    Donor.find({ email: req.params.email })
-      .then((donor) => res.json(donor))
-      .catch((err) => res.status(400).json("Error: " + err));
+// const getDonationsData = async (donations, res) => {
+//   Bank.find(
+//     {
+//       _id: { $in: donations.to },
+//     },
+//     (err, banks) => {
+//       if (err) {
+//         console.log(`Error: ` + err);
+//       } else {
+//         if (banks.length === 0) {
+//           console.log("message");
+//         } else {
+//           console.log("getDonationsData");
+//           res.json({ banks, donations });
+//         }
+//       }
+//     }
+//   );
+// };
+
+const getDonations = async (donor, res) => {
+  Donation.find(
+    {
+      _id: { $in: donor.donations },
+    },
+    (err, docs) => {
+      if (err) {
+        console.log(`Error: ` + err);
+      } else {
+        if (docs.length === 0) {
+          console.log("message");
+        } else {
+          console.log("found", docs);
+        }
+        res.send(docs);
+        // console.log("calling getDonationsData");
+        // getDonationsData(docs, res);
+      }
+    }
+  );
+};
+
+router.route("/yourdonations").get((req, res) => {
+  const user = req.currentUser;
+  if (user) {
+    User.findOne({
+      email: user.email,
+    }).then(async (u) => {
+      if (!u) {
+        console.log("message");
+        res.status(404).send("user not found");
+      } else {
+        // let ds = [];
+        try {
+          let donor = await Donor.findOne({ user: u._id });
+          await getDonations(donor, res);
+          // console.log("2", donations);
+          // res.send(donations);
+        } catch (error) {
+          res.status(404).send("no data found");
+        }
+      }
+    });
+  } else {
+    res.send("User not logged in");
   }
-  return res.status(403).send("Not authorized");
 });
+// router.route("/:email").get((req, res) => {
+//   const auth = req.currentUser;
+//   if (auth) {
+//     Donor.find({ email: req.params.email })
+//       .then((donor) => res.json(donor))
+//       .catch((err) => res.status(400).json("Error: " + err));
+//   }
+//   return res.status(403).send("Not authorized");
+// });
 // router.route("/:id").delete((req, res) => {
 //   User.findByIdAndDelete(req.params.id)
 //     .then(() => res.json("User deleted."))
@@ -141,4 +202,32 @@ router.route("/:email").get((req, res) => {
 //     })
 //     .catch((err) => res.status(400).json("Error: " + err));
 // });
+
+// other functions
+
+router.route("/getbankdetails").get((req, res) => {
+  const user = req.currentUser;
+  if (user) {
+    Bank.find(
+      {
+        // field: filter,
+      },
+      (err, docs) => {
+        // console.log(docs);
+        if (err) {
+          console.log(`Error: ` + err);
+          res.status(500).send("Unexpected error");
+        } else {
+          if (docs.length === 0) {
+            console.log("message");
+            res.status(404).send("Banks not found");
+          } else {
+            res.json(docs);
+          }
+        }
+      }
+    );
+  } else res.status(401).send("Please login to fetch details");
+});
+
 module.exports = router;
